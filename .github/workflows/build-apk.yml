@@ -80,4 +80,8 @@ jobs:
         run: flutter build apk --release
 
       - name: رفع APK كـ artifact
-        u
+        uses: actions/upload-artifact@v4
+        with:
+          name: hamo-vpn-apk
+          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
