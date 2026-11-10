@@ -43,7 +43,6 @@ jobs:
       - name: تثبيت Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
           channel: 'stable'
           cache: true
 
@@ -53,6 +52,20 @@ jobs:
           if [ ! -d "android" ]; then
             flutter create . --platforms=android --org com.example --project-name hamo_vpn_flutter
           fi
+
+      - name: التأكد من compileSdk 35 (مطلوب لمكتبة V2Ray)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          # يدعم كل من build.gradle (Groovy) و build.gradle.kts (Kotlin DSL)
+          GRADLE_FILE="android/app/build.gradle"
+          if [ -f "android/app/build.gradle.kts" ]; then
+            GRADLE_FILE="android/app/build.gradle.kts"
+          fi
+          echo "تعديل: $GRADLE_FILE"
+          sed -i -E "s/compileSdk(Version)? ?= ?flutter\.compileSdkVersion/compileSdk = 35/" "$GRADLE_FILE" || true
+          sed -i -E "s/compileSdk(Version)? flutter\.compileSdkVersion/compileSdk 35/" "$GRADLE_FILE" || true
+          echo "===== $GRADLE_FILE ====="
+          cat "$GRADLE_FILE"
 
       - name: تثبيت الاعتماديات
         working-directory: ${{ env.PROJECT_DIR }}
@@ -67,8 +80,4 @@ jobs:
         run: flutter build apk --release
 
       - name: رفع APK كـ artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hamo-vpn-apk
-          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 14
+        u
