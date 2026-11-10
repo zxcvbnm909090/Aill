@@ -1,0 +1,74 @@
+name: Build APK
+
+# يعمل تلقائيًا عند كل push على main، أو يدويًا من تبويب Actions
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: سحب الكود
+        uses: actions/checkout@v4
+
+      # إذا رفعت المشروع كملف HamoVpnFlutter.zip في جذر الريبو (بدون فك ضغط)
+      # هذه الخطوة تفكه تلقائيًا وتستخرج محتواه لمجلد العمل.
+      # إذا كنت رفعت الملفات مفكوكة أصلاً، هذه الخطوة تتخطى نفسها بأمان.
+      - name: فك ضغط المشروع (إن وُجد zip في الجذر)
+        run: |
+          ZIP_FILE=$(find . -maxdepth 1 -iname "*.zip" | head -n 1)
+          if [ -n "$ZIP_FILE" ]; then
+            echo "تم العثور على: $ZIP_FILE — جاري الفك..."
+            unzip -o "$ZIP_FILE" -d extracted_project
+            # ادخل داخل أول مجلد داخل extracted_project (باسم المشروع)
+            INNER_DIR=$(find extracted_project -mindepth 1 -maxdepth 1 -type d | head -n 1)
+            if [ -n "$INNER_DIR" ]; then
+              echo "PROJECT_DIR=$INNER_DIR" >> $GITHUB_ENV
+            else
+              echo "PROJECT_DIR=extracted_project" >> $GITHUB_ENV
+            fi
+          else
+            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          fi
+
+      - name: تثبيت Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: تثبيت Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+          cache: true
+
+      - name: توليد مجلد android الناقص (إن لم يكن موجودًا)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          if [ ! -d "android" ]; then
+            flutter create . --platforms=android --org com.example
+          fi
+
+      - name: تثبيت الاعتماديات
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: flutter pub get
+
+      - name: فحص سريع (اختياري - لا يوقف البناء لو فشل)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: flutter analyze || true
+
+      - name: بناء APK (release)
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: flutter build apk --release
+
+      - name: رفع APK كـ artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hamo-vpn-apk
+          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
