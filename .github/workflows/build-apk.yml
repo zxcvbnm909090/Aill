@@ -53,7 +53,7 @@ jobs:
             flutter create . --platforms=android --org com.example --project-name hamo_vpn_flutter
           fi
 
-      - name: التأكد من compileSdk 35 (مطلوب لمكتبة V2Ray)
+      - name: التأكد من compileSdk 36 (مطلوب لعدة مكتبات)
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
           # يدعم كل من build.gradle (Groovy) و build.gradle.kts (Kotlin DSL)
@@ -62,8 +62,12 @@ jobs:
             GRADLE_FILE="android/app/build.gradle.kts"
           fi
           echo "تعديل: $GRADLE_FILE"
-          sed -i -E "s/compileSdk(Version)? ?= ?flutter\.compileSdkVersion/compileSdk = 35/" "$GRADLE_FILE" || true
-          sed -i -E "s/compileSdk(Version)? flutter\.compileSdkVersion/compileSdk 35/" "$GRADLE_FILE" || true
+          # إزالة أي قيمة سابقة ثابتة (35 مثلاً) أو المتغيرة من flutter، ووضع 36 بدلاً عنها
+          sed -i -E "s/compileSdk(Version)? ?= ?flutter\.compileSdkVersion/compileSdk = 36/" "$GRADLE_FILE" || true
+          sed -i -E "s/compileSdk(Version)? flutter\.compileSdkVersion/compileSdk 36/" "$GRADLE_FILE" || true
+          sed -i -E "s/compileSdk = [0-9]+/compileSdk = 36/" "$GRADLE_FILE" || true
+          sed -i -E "s/compileSdk [0-9]+/compileSdk 36/" "$GRADLE_FILE" || true
+          sed -i -E "s/compileSdkVersion [0-9]+/compileSdkVersion 36/" "$GRADLE_FILE" || true
           echo "===== $GRADLE_FILE ====="
           cat "$GRADLE_FILE"
 
