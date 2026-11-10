@@ -1,4 +1,4 @@
-name: Build MAHMOUD VPN
+name: Build MAHMOUD VPN APK
 
 on:
   workflow_dispatch:
@@ -13,25 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract ZIP
-        run: |
-          ZIP=$(find . -maxdepth 1 -name 'MAHMOUD-VPN-with-AboWaged-servers.zip' -print -quit)
-          test -n "$ZIP"
-          mkdir extracted
-          unzip -o "$ZIP" -d extracted
-          cp -r extracted/MAHMOUD-VPN/. . 2>/dev/null || cp -r extracted/. .
-
-      - name: Setup Java
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      - name: Extract Project
+        run: |
+          unzip -o MAHMOUD-VPN-with-AboWaged-servers.zip -d extracted
+
       - name: Build APK
-        run: gradle assembleDebug
+        working-directory: extracted/mahmoudvpn_project2
+        run: |
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MAHMOUD-VPN-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: extracted/mahmoudvpn_project2/app/build/outputs/apk/debug/*.apk
