@@ -51,7 +51,7 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
           if [ ! -d "android" ]; then
-            flutter create . --platforms=android --org com.example
+            flutter create . --platforms=android --org com.example --project-name hamo_vpn_flutter
           fi
 
       - name: تثبيت الاعتماديات
